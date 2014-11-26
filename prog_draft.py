@@ -5,7 +5,8 @@
 
 
 
-import os, time, subprocess, time, sys, bluetooth, csv
+import os, time, subprocess, time, sys, bluetooth, csv #Will need to import ble library
+
 
 
 
@@ -62,38 +63,46 @@ def writer(person, state):
 
 	with open("./%s" % person, "a") as csv_file:
 		writer = csv.writer(csv_file, delimiter=',')
-		writer.writerow([state, time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())])				
+		writer.writerow([state, time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())])				
 				
 				
-def scan(person):
+def scan(people):
 	
-			result = bluetooth.lookup_name(person.bt, timeout=2)
-		
-			 
-
-			if (result != None):
-			 
-				if person.status != "in":
-					person.status = "in"
-					darl = person.name + ".csv"
-					writer(darl, "in")
+			nearby_devices = bluetooth.discover_devices(duration = 4, lookup_names = True)
+			for addr in nearby_devices:
+				print addr
+				for person in people:
+					
+					if (addr[0] == person.bt):
+						print "im in"
+						
+						if person.status != "in":
+								person.status = "in"
+								darl = person.name + ".csv"
+								print person.name, person.status
+								writer(darl, "in")
+						
 				
-		
-			else:
+						else:
 
-				if person.status != "out":
-					person.status = "out"
-					darl = person.name + ".csv"
-					writer(darl, "out")									
+							if person.status != "out":
+								person.status = "out"
+								darl = person.name + ".csv"
+								print person.name, person.status
+								writer(darl, "out")	
+		
+			 
+
+								
 	
 	
 					
 		
 people = todaysPeople('daily.csv')
+
+
 while running:
 
-	print "Checking " + time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
-	for person in people:
-		scan(person)
-		print person.name, person.status
-		time.sleep(2)
+	print "Checking " + time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
+	scan(people)
+	
