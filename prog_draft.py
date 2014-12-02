@@ -5,18 +5,16 @@
 
 
 
-import os, time, subprocess, time, sys, bluetooth, csv #Will need to import ble library
+import os, time, subprocess, time, sys, bluetooth, csv, blescan #Will need to import ble library
 
-
+import bluetooth._bluetooth as bluez
 
 
 
 	
 running = 1
 
-devnull = open('/dev/null', 'wb')
 
-i = 0
 
 class Staff:
 	
@@ -29,16 +27,30 @@ class Staff:
 		self.status = 'out'
 	
 
-	
+def init():
+		
+	dev_id = 0
+	try:
+		sock = bluez.hci_open_dev(dev_id)
+		print sock
 
-def todaysPeople(filename):
+	except:
+		print "error accessing bluetooth device..."
+		sys.exit(1)
+
+	blescan.hci_le_set_scan_parameters(sock)
+	blescan.hci_enable_le_scan(sock)
+	return sock
+
+
+def People(filename):
 		
 	people = []
 	
 	with open(filename, 'rb') as data:
 
-		todays_roster = csv.reader(data)
-		for row in todays_roster:
+		roster = csv.reader(data)
+		for row in roster:
 			
 			if (row[0] != "Name"):
 				
@@ -68,13 +80,14 @@ def writer(person, state):
 				
 def scan(people):
 	
-			nearby_devices = bluetooth.discover_devices(duration = 4, lookup_names = True)
+			nearby_devices = blescan.parse_events(sock, 10)
+			print "im in"
 			for addr in nearby_devices:
 				print addr
 				for person in people:
 					
 					if (addr[0] == person.bt):
-						print "im in"
+						
 						
 						if person.status != "in":
 								person.status = "in"
@@ -98,8 +111,9 @@ def scan(people):
 	
 					
 		
-people = todaysPeople('daily.csv')
+people = People('daily.csv')
 
+sock = init()
 
 while running:
 
