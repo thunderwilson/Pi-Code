@@ -80,7 +80,7 @@ def writer(person, state):
 		writer.writerow([state, time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())])				
 	
 def recv_data(unique_nearby_devices, HOST, PORT):	
-	client_list = ['192.168.20.113','192.168.20.234']
+	client_list = ['192.168.20.113']
 	yet_to_connect = client_list
 	socket.socket.allow_reuse_address = True
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
