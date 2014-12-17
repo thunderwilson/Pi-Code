@@ -26,7 +26,7 @@ class Staff:
 		self.bt = bt
 		self.start_time = start_time
 		self.end_time = end_time
-		self.status = 'out'
+		self.status = "out"
 	
 
 def init():
@@ -95,51 +95,47 @@ def unique(nearby_devices, unique_nearby_devices):
 	for addr in nearby_devices:
 
 
-		
+		#print("In Unique function", addr)	Yay for debugging
 		device = []
 		device.append(addr.split(','))
 		
-
+		#print "Device name to compare", device[0][0]
+		#for thing in unique_nearby_devices:
+			#print "In list already", thing	
 		
 		if device[0][0] not in unique_nearby_devices:
-			##print("adding  loop")
-			unique_nearby_devices.append(device[0])
-			return unique_nearby_devices
-		else:
+			#print("adding  loop")
+			unique_nearby_devices.append(device[0][0])
 			
-			return unique_nearby_devices
+		
+					
+	return unique_nearby_devices
 					
 def scan(people):
 			unique_nearby_devices = []
-			nearby_devices = blescan.parse_events(sock, 2)
+			nearby_devices = blescan.parse_events(sock, 4)
+			#print (nearby_devices)		Yay more debugging =P =P
 			unique_nearby_devices = unique(nearby_devices, unique_nearby_devices)
 			
 			send_data(unique_nearby_devices, HOST, PORT)
-			for addr in unique_nearby_devices:
+			for person in people:
 			
-				print addr
 				
-				for person in people:
-					
-					if (addr[0] == person.bt):
+				if person.bt.lower() in unique_nearby_devices:						
 						
-						
+						print "checking first time in"
+
 						if person.status != "in":
 								person.status = "in"
 								darl = person.name + ".csv"
 								print person.name, person.status
-								writer(darl, "in")
-						
-				
-						else:
-
-							if person.status != "out":
-								person.status = "out"
-								darl = person.name + ".csv"
-								print person.name, person.status
-								writer(darl, "out")	
-	
-		 
+								writer(darl, "in")	
+		 		else:
+					if person.status != "out":
+						person.status = "out"
+						darl = person.name + ".csv"
+						print person.name, person.status
+						writer(darl, "out")
 
 							
 
