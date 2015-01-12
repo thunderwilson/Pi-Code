@@ -80,19 +80,16 @@ def writer(person, state):
 		writer.writerow([state, time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())])				
 	
 def recv_data(unique_nearby_devices, HOST, PORT):	
-	client_list = ['192.168.20.113', 'something else']
+	client_list = ['192.168.20.101']
 	yet_to_connect = client_list
 	socket.socket.allow_reuse_address = True
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	s.bind((HOST, PORT))
-	wait_time = 5
-	time = 0
-	while len(yet_to_connect) >0 & time < wait_time:
-		print "in the while loop"
+
 
 		s.listen(0)
-		print " past listen line"
+
 		conn, addr = s.accept()
 		print 'Connected by', addr[0]
 		
@@ -102,14 +99,12 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 
 		data = conn.recv(1024)
 		unique_nearby_devices.append(data)
-		print "tick tock"
+
 		if not data: break  #Come back to this puppy. Could cause troubles
-		time += 1
-		print time
 
 
-	if len(yet_to_connect) >0:
-		print "Failed to receive data from", yet_to_connect, ", moving on"
+
+
 
 	
 
@@ -138,8 +133,8 @@ def unique(nearby_devices, unique_nearby_devices):
 					
 def scan(people):
 			unique_nearby_devices = []
-			##nearby_devices = blescan.parse_events(sock, 2)
-			##unique_nearby_devices = unique(nearby_devices, unique_nearby_devices)
+			nearby_devices = blescan.parse_events(sock, 2)
+			unique_nearby_devices = unique(nearby_devices, unique_nearby_devices)
 			recv_data(unique_nearby_devices, HOST, PORT)
 			unique_nearby_devices = unique(unique_nearby_devices, unique_nearby_devices)
 			
@@ -170,7 +165,7 @@ def scan(people):
 		
 people = People('daily.csv')
 
-##sock = init() remember to uncomment me when you want tserver to act as a scanner too
+sock = init() #remember to uncomment me when you want tserver to act as a scanner too
 
 while running:
 
