@@ -91,7 +91,11 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 	while len(yet_to_connect) >0 & time < wait_time:
 		print "in the while loop"
 
+<<<<<<< HEAD
 		s.listen(1)
+=======
+		s.listen(0)
+>>>>>>> 189938cd245d47608538a7e438f389c7a70d6fe5
 		print " past listen line"
 		conn, addr = s.accept()
 		print 'Connected by', addr[0]
@@ -102,6 +106,10 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 
 		data = conn.recv(1024)
 		unique_nearby_devices.append(data)
+<<<<<<< HEAD
+=======
+		print "tick tock"
+>>>>>>> 189938cd245d47608538a7e438f389c7a70d6fe5
 		if not data: break  #Come back to this puppy. Could cause troubles
 		time += 1
 		print time
