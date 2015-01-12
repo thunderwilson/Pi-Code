@@ -88,16 +88,11 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 	s.bind((HOST, PORT))
 
 
-<<<<<<< HEAD
-		s.listen(1)
-=======
-		s.listen(0)
-<<<<<<< HEAD
->>>>>>> 189938cd245d47608538a7e438f389c7a70d6fe5
-		print " past listen line"
-=======
 
->>>>>>> 99452716f93942d7350ffe11c948685666d6eeeb
+		s.listen(1)
+
+
+
 		conn, addr = s.accept()
 		print 'Connected by', addr[0]
 		
@@ -107,14 +102,7 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 
 		data = conn.recv(1024)
 		unique_nearby_devices.append(data)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-		print "tick tock"
->>>>>>> 189938cd245d47608538a7e438f389c7a70d6fe5
-=======
 
->>>>>>> 99452716f93942d7350ffe11c948685666d6eeeb
 		if not data: break  #Come back to this puppy. Could cause troubles
 
 
