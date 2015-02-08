@@ -1,32 +1,25 @@
-##Draft code for basic smart badge implementation
-##RasPi local code
+##Draft code for asic smart badge implementation
+#RasPi local code
 ##Author: T D G Wilson
 ##Date: 18/11/2014
 
+
+##*****************************GLOBALS***************************************
 HOST = ''
 PORT = 50007
+device_id = '4b200275-5153-4cc3-8356-a52e5539a801' ##THIS IS VEWY IMPORTANT
+client_list = ['192.168.1.76', '192.192.192.192']
+##*************************************************************************
 
-import os, time, datetime, subprocess, time, sys, bluetooth, csv, blescan #Will need to import ble library
+import os, time, datetime, subprocess, time, sys, bluetooth, csv, blescan 
 
 import bluetooth._bluetooth as bluez
 
 import socket
 
-
+import requests, json, simplejson
 	
 running = 1
-
-
-
-class Staff:
-	
-	def __init__(self, name, bt, start_time, end_time, status):
-		
-		self.name = name 
-		self.bt = bt
-		self.start_time = start_time
-		self.end_time = end_time
-		self.status = 'out'
 	
 
 def init():
@@ -45,21 +38,23 @@ def init():
 	return sock
 
 
-def People(filename):
+def People(device_id):
 		
-	people = []
 	
-	with open(filename, 'rb') as data:
+	people_keys = {}
+	payload = {'device_id' : device_id}
+	r = requests.get("https://www.tanda.co/api/userlist?", params = payload)
+	data = r.text
 
-		roster = csv.reader(data)
-		for row in roster:
-			
-			if (row[0] != "Name"):
+	j = json.loads(data)
+	for item in j:
 				
-				people.append(Staff(row[0], findAddress(row[0]), row[1], row[3], 'out')) 
+		people_keys[item["user_name"]] = [item["passcode"], ' ', findAddress(item["user_name"])]
+
+	
 				
-	return people	
-			
+	return people_keys
+
 	
 def findAddress(name):
 	
@@ -73,21 +68,30 @@ def findAddress(name):
 				
 				
 				
-def writer(person, state):
+def clock(person, state, people_keys):
+	print "In clock"
+	timestamp = int(time.time())
+	access_code = people_keys[person][0]
+	if state == 'in':
+		print "clocking in: ", people_keys[person][0]
+		r = requests.post('https://www.tanda.co/api/login -i --data "device_id=",device_id, "&time =",timestamp,"&access_code=",access_code')
+	elif state == 'out':
+		print "clocking out: ", people_keys[person][0]
+		r = requests.post('https://www.tanda.co/api/logout -i --data "device_id=",device_id, "&time =",timestamp,"&access_code=",access_code')
 
-	with open("./%s" % person, "a") as csv_file:
-		writer = csv.writer(csv_file, delimiter=',')
-		writer.writerow([state, time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())])				
-	
-def recv_data(unique_nearby_devices, HOST, PORT):	
-	client_list = ['192.168.1.72','192.192.192.192']	
-	yet_to_connect = client_list
+
+def recv_data(unique_nearby_devices, HOST, PORT, client_list):	
+	yet_to_connect = []	
+	for item in client_list:
+		yet_to_connect.append(item)
+
+
 	socket.socket.allow_reuse_address = True
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	s.bind((HOST, PORT))
 	s.settimeout(10)
-	fuck_this = 0	
+	fuck_this = 0
 
 	while len(yet_to_connect) > 0:
 		
@@ -100,8 +104,9 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 		
 	
 			conn, addr = s.accept()
-			print 'Connected by', addr[0]
-			fuck_this +=1
+			if addr[0] in yet_to_connect:
+				print 'Connected by', addr[0]
+			fuck_this += 1
 			if fuck_this > 2* len(yet_to_connect):
 				print "Did not reveive data from: ", yet_to_connect
 				conn.sendall(data)
@@ -114,8 +119,8 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 
 
 
-				data = conn.recv(1024)
-				unique_nearby_devices.append(data)
+			data = conn.recv(1024)
+			unique_nearby_devices.append(data)
 
 
 ##		if not data: 
@@ -146,15 +151,6 @@ def recv_data(unique_nearby_devices, HOST, PORT):
 
 
 
-def send_data(HOST2, PORT):##Fuck this fucker
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect((HOST2, PORT))
-	s.sendall("gotchya")
-	s.close
-
-
-
-
 					
 def unique(nearby_devices, unique_nearby_devices):
 	
@@ -169,7 +165,7 @@ def unique(nearby_devices, unique_nearby_devices):
 		
 		if device[0][0] not in unique_nearby_devices:
 			
-			unique_nearby_devices.append(device[0][0])
+			unique_nearby_devices.append(device[0][0].upper())
 			
 	return unique_nearby_devices
 					
@@ -177,36 +173,37 @@ def scan(people):
 			unique_nearby_devices = []
 			nearby_devices = blescan.parse_events(sock, 2)
 			unique_nearby_devices = unique(nearby_devices, unique_nearby_devices)
-			recv_data(unique_nearby_devices, HOST, PORT)
+			recv_data(unique_nearby_devices, HOST, PORT, client_list)
 			unique_nearby_devices = unique(unique_nearby_devices, unique_nearby_devices)
-			
+			print "Devices: ", unique_nearby_devices
 			for person in people:
-			
-				if person.bt.lower() in unique_nearby_devices:
+				
+				print people[person][2], "\n"
+				
+				if people[person][2] in unique_nearby_devices and person =="Tom's Tester":
 					print "Checking if first time in"
 				
-					if person.status != "in":
+					if people[person][1] != "in":
 					
-						person.status = "in"
-						darl = person.name + ".csv"
-						print person.name, person.status
-						writer(darl, "in")
+						people[person][1] = "in"
+						
+						clock(person, "in", people)
 				
 				else:
 				
-					if person.status != "out":
-						person.status = "out"
-						darl = person.name + ".csv"
-						print person.name, person.status
-						writer(darl, "out")
+					if people[person][1] != "out":
+						people[person][1] = "out"
+						
+						clock(person, "out", people)
 
 							
 
 
 					
 		
-people = People('daily.csv')
+people = People(device_id)
 
+print people["Tom's Tester"][2]
 sock = init() #remember to uncomment me when you want tserver to act as a scanner too
 
 while running:
